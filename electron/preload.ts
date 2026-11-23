@@ -1,0 +1,67 @@
+import { contextBridge, ipcRenderer } from "electron";
+const allowed = new Set([
+  "snapshot",
+  "skill.evolve",
+  "skill.accept",
+  "skill.reject",
+  "skill.save",
+  "skill.delete",
+  "project.create",
+  "project.update",
+  "project.detail",
+  "project.search",
+  "memory.rebuild",
+  "chapter.get",
+  "chapter.create",
+  "chapter.save",
+  "chapter.versions",
+  "chapter.version",
+  "chapter.restore",
+  "fact.save",
+  "fact.delete",
+  "run.start",
+  "run.resume",
+  "run.pause",
+  "run.cancel",
+  "run.get",
+  "model.save",
+  "model.delete",
+  "model.test",
+  "reference.list",
+  "reference.versions",
+  "reference.version",
+  "template.versions",
+  "template.version",
+  "reference.get",
+  "reference.save",
+  "reference.delete",
+  "reference.fetch",
+  "reference.search",
+  "reference.auto",
+  "reference.analyze",
+  "template.save",
+  "template.delete",
+  "rewrite.request",
+  "rewrite.accept",
+  "rewrite.reject",
+  "impact.resolve",
+  "import.preview",
+  "import.commit",
+  "export.save",
+  "backup.save",
+  "backup.open",
+  "secret.brave",
+  "app.directory",
+  "app.close",
+]);
+contextBridge.exposeInMainWorld("studio", {
+  call: (method: string, args: any = {}) => {
+    if (!allowed.has(method)) return Promise.reject(new Error("不支持的操作"));
+    return ipcRenderer.invoke("studio:call", method, args);
+  },
+  onEvent: (callback: any) => {
+    const listener = (_event: any, value: any) => callback(value);
+    ipcRenderer.on("studio:event", listener);
+    return () => ipcRenderer.removeListener("studio:event", listener);
+  },
+});
